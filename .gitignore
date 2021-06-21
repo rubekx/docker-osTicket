@@ -1,2 +1,4 @@
 .env
-/configs/mysql
+/configs/mysql/database
+/configs/mysql/init/sql/*
+
