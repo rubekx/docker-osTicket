@@ -39,10 +39,11 @@ define('ADMIN_EMAIL','genilsonsoares.b@gmail.com');
 # ---------------------------------------------------
 # Mysql Login info
 define('DBTYPE','mysql');
-define('DBHOST','localhost');
+define('DBHOST','osticket-mysql'); // DOCKER HOST
+// define('DBHOST','localhost'); LOCALHOST
 define('DBNAME','osticketdb');
-define('DBUSER','osticket');
-define('DBPASS','password');
+define('DBUSER','root');
+define('DBPASS','123456');
 
 # Table prefix
 define('TABLE_PREFIX','ost_');
