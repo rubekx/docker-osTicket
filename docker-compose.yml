@@ -1,19 +1,13 @@
 version: '3.5'
 
 services:
-  osticket-app:
-    build:
-      context: '.'
-      args:
-        uid: ${UID}
-    container_name: osticket-app
+  app:
+    build: .
+    container_name: app
     restart: unless-stopped
-    environment:
-      - APACHE_RUN_USER=#${UID}
-      - APACHE_RUN_GROUP=#${UID}
     volumes:
-      - /osticket:/var/www/html
-      - /configs/php/php.ini:/usr/local/etc/php/php.ini
+      - ./osticket:/var/www/html      
+      - ./configs/php/php.ini:/usr/local/etc/php/php.ini
     ports:
       - ${HOST_EXT_PORT}:${HOST_INT_PORT}
     networks:
@@ -26,10 +20,10 @@ services:
     ports:
       - ${MYSQL_EXT_PORT}:${MYSQL_INT_PORT}
     volumes:
-      - /configs/mysql/database:/var/lib/mysql
-      - /configs/mysql/init:/docker-entrypoint-initdb.d/
+      - ./configs/mysql/database:/var/lib/mysql
+      - ./configs/mysql/init:/docker-entrypoint-initdb.d/
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     networks:
       - osticket-network
 
