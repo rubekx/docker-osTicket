@@ -190,6 +190,9 @@ extends SessionBackend {
         }
         catch (DoesNotExist $e) {
             $this->data = new SessionData(['session_id' => $id]);
+            
+            // line added to fix token CSRF validation
+            $this->data->session_data = "";
         }
         catch (OrmException $e) {
             return false;
