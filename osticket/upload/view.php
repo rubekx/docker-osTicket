@@ -16,10 +16,10 @@
     $Id: $
 **********************************************************************/
 
-if(strpos($_SERVER['HTTP_HOST'],'nead.ufma.br')!==FALSE){
-    header("Location: http://www.atendimento.dted.ufma.br/view.php");
-    exit();
-}
+// if(strpos($_SERVER['HTTP_HOST'],'nead.ufma.br')!==FALSE){
+//     header("Location: http://www.atendimento.dted.ufma.br/view.php");
+//     exit();
+// }
 
 require_once('client.inc.php');
 
