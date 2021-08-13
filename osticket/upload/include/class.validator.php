@@ -123,6 +123,10 @@ class Validator {
                 if(!is_numeric($this->input[$k]) || (strlen($this->input[$k])!=5))
                     $this->errors[$k]=$field['error'];
                 break;
+            case 'cpf':
+                if(!self::is_cpf($this->input[$k]))
+                    $this->errors[$k]=$field['error'];
+                break;
             default://If param type is not set...or handle..error out...
                 $this->errors[$k]=$field['error'].' '.__('(type not set)');
             endswitch;
@@ -196,6 +200,10 @@ class Validator {
         return $error == '';
     }
 
+
+    static function is_cpf($cpf){
+        return self::check_cpf($cpf);
+    }
 
     /*
      * check_ip
@@ -298,6 +306,24 @@ class Validator {
             $errors=array_merge($errors,$val->errors());
 
         return (!$errors);
+    }
+
+
+    static function check_cpf($cpf){
+        $cpf = preg_replace( '/[^0-9]/is', '', $cpf );                
+        if (strlen($cpf) !== 11 || preg_match('/(\d)\1{10}/', $cpf)) {
+            return false;               
+         }
+        for ($t = 9; $t < 11; $t++) {
+            for ($d = 0, $c = 0; $c < $t; $c++) {
+                $d += $cpf{$c} * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ($cpf{$c} != $d) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 ?>
