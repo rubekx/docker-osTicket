@@ -5,6 +5,12 @@ if($thisclient && $thisclient->isValid()) {
     $info=array('name'=>$thisclient->getName(),
                 'email'=>$thisclient->getEmail(),
                 'phone'=>$thisclient->getPhoneNumber());
+                
+    $client_uid = !is_null($thisclient->getId()) ? $thisclient->getId() : null;
+    echo $client_uid;
+    echo '<br>';
+    $cpf_array = Validator::check_cpf_is_exist_and_valid(null, $client_uid);
+    echo var_dump($cpf_array);
 }
 
 $info=($_POST && $errors)?Format::htmlchars($_POST):$info;
@@ -72,17 +78,17 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
                           $(document.head).append(json.media);
                         }
                       });">
-                <option value="" selected="selected">&mdash; <?php echo "Curso"; /*__('Select a Help Topic');*/ ?> &mdash;</option>
                 <?php
+                echo '<option value="" selected="selected">Curso</option>';
                 if($topics=Topic::getPublicHelpTopics()) {
                     foreach($topics as $id =>$name) {
                         echo sprintf('<option value="%d" %s>%s</option>',
                                 $id, ($info['topicId']==$id)?'selected="selected"':'', $name);
                     }
-                } else { ?>
-                    <option value="0" ><?php echo __('General Inquiry');?></option>
-                <?php
-                } ?>
+                } 
+                else echo $cpf_array['erro'];
+                // echo '<option value="0">'. __("General Inquiry").'</option>';
+                ?>
             </select>
             <font class="error">*&nbsp;<?php echo $errors['topicId']; ?></font>
         </td>
