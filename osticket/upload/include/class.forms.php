@@ -1320,7 +1320,7 @@ class TextboxField extends FormField {
                     }
                 }
                 return true;
-            }, 'Enter a valid CPF'),
+            }, 'Digite um CPF válido'),
             'number' => array('is_numeric', __('Enter a number')),
             'regex' => array(
                 function($v) use ($config) {
