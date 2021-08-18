@@ -328,18 +328,16 @@ class Validator {
     static function check_cpf_is_exist_and_valid($cpf = null , $client_uid = null){
         if(is_null($cpf)){
             $cpf = self::getCPF($client_uid);
-        }
-        $dot_cpf = $cpf;        
-                // return $cpf;
+        }      
         if(self::check_cpf($cpf)){
             $select = "SELECT ".FORM_ENTRY_TABLE.".object_id AS client_uid FROM ".FORM_ANSWER_TABLE." "; 
-            $where =" WHERE ".FORM_ANSWER_TABLE.".value LIKE '%".$cpf."%' OR ".FORM_ANSWER_TABLE.".value LIKE '%".$dot_cpf."%' ";        
+            $where =" WHERE ".FORM_ANSWER_TABLE.".value LIKE '%".$cpf."%' ";        
             $join = "JOIN ".FORM_ENTRY_TABLE." ON ".FORM_ENTRY_TABLE.".id = ".FORM_ANSWER_TABLE.".entry_id ";
             $sql = $select.$join.$where;
             $query = db_query($sql);
             $user_id = db_result($query);
             if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) return array("cpf_exist"=>1,'same_user'=>1,'erro'=>0,'msg'=>1); 
-            if(!is_null($user_id)) return array("cpf_exist"=>1,'same_user'=>0,'erro'=>1,'msg'=>'CPF cadastrado em outro usuário! Entre em contato com a DTED pelo email');
+            if(!is_null($user_id)) return array("cpf_exist"=>1,'same_user'=>0,'erro'=>1,'msg'=>'CPF cadastrado em outro usuário! Por favor, entre em contato com a DTED pelo email');
         }
         return array("cpf_exist"=>0,'same_user'=>0,'erro'=>1,'msg'=>'CPF inválido');
     }
