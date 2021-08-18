@@ -326,26 +326,28 @@ class Validator {
     }
 
     static function check_cpf_is_exist($cpf = null , $client_uid = null){
-        if(is_null($cpf)){
-            $cpf = self::get_cpf($client_uid);
-        }      
+        if(is_null($cpf)) $cpf = self::get_cpf($client_uid);
         if(self::check_cpf($cpf)){
-            $sql = "SELECT {FORM_ENTRY_TABLE}.object_id AS client_uid FROM {FORM_ANSWER_TABLE} ". 
-            "WHERE {FORM_ANSWER_TABLE}.value LIKE '%{$cpf}%' ".   
-            "JOIN {FORM_ENTRY_TABLE} ON {FORM_ENTRY_TABLE}.id={FORM_ANSWER_TABLE}.entry_id";
+            $answer_table = FORM_ANSWER_TABLE;
+            $entry_table = FORM_ENTRY_TABLE;
+            $sql = "SELECT {$entry_table}.object_id AS client_uid FROM {$answer_table} JOIN {$entry_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
+            "WHERE {$answer_table}.value LIKE '%{$cpf}%'";
             $query = db_query($sql);
             $user_id = db_result($query);
-            if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) return array("cpf_exist"=>1,'same_user'=>1,'erro'=>0,'msg'=>'CPF válido'); 
-            if(!is_null($user_id)) return array("cpf_exist"=>1,'same_user'=>0,'erro'=>1,'msg'=>'CPF cadastrado em outro usuário! Por favor, entre em contato com a DTED pelo email');
+            if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) 
+                return array("cpf_exist"=>1,'same_user'=>1,'error'=>0,'msg'=>'CPF válido'); 
+            if(!is_null($user_id)) 
+                return array("cpf_exist"=>1,'same_user'=>0,'error'=>1,'msg'=>'O CPF informando já possui cadastrado! Por favor, entre em contato com a DTED pelo email');
         }
-        return array("cpf_exist"=>0,'same_user'=>0,'erro'=>1,'msg'=>'CPF inválido');
+        return array("cpf_exist"=>0,'same_user'=>0,'error'=>1,'msg'=>'CPF inválido');
     }
 
     static function get_cpf($client_uid){
         if(is_numeric($client_uid)){
-            $sql="SELECT {FORM_ANSWER_TABLE}.value AS cpf FROM {FORM_ENTRY_TABLE} ".
-            "WHERE {FORM_ENTRY_TABLE}.object_id ='{$client_uid}' AND {FORM_ANSWER_TABLE}.field_id=43 ".
-            "JOIN {FORM_ANSWER_TABLE} ON {FORM_ENTRY_TABLE}.id={FORM_ANSWER_TABLE}.entry_id";
+            $answer_table = FORM_ANSWER_TABLE;
+            $entry_table = FORM_ENTRY_TABLE;
+            $sql="SELECT {$answer_table}.value AS cpf FROM {$entry_table} JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
+            "WHERE {$entry_table}.object_id ='{$client_uid}' AND {$answer_table}.field_id=43";
             $query = db_query($sql);
             $cpf = db_result($query);
             return $cpf;
