@@ -7,10 +7,12 @@ if($thisclient && $thisclient->isValid()) {
                 'phone'=>$thisclient->getPhoneNumber());
                 
     $client_uid = !is_null($thisclient->getId()) ? $thisclient->getId() : null;
-    echo $client_uid;
-    echo '<br>';
-    $cpf_array = Validator::check_cpf_is_exist_and_valid(null, $client_uid);
-    echo var_dump($cpf_array);
+    $cpf_array = Validator::check_cpf_is_exist(null, $client_uid);
+    if ($cpf_array['error']==1) {        
+        $btn = "<a href='/account.php' class='btn btn-primary'>Atualizar Perfil</a>";
+        echo "<div class='alert alert-danger'>Para enviar um chamado precisamos dos seus dados atualizados. <b>{$cpf_array['msg']}!</b><br>Clique no botão para atualizar os seus dados: {$btn} </div>";
+        throw new Exception($cpf_array['msg']);
+    }
 }
 
 $info=($_POST && $errors)?Format::htmlchars($_POST):$info;
