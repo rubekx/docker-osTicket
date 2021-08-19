@@ -410,7 +410,9 @@ class Validator
         if (is_numeric($client_uid)) {
             $answer_table = FORM_ANSWER_TABLE;
             $entry_table = FORM_ENTRY_TABLE;
-            $sql = "SELECT {$answer_table}.value AS cpf FROM {$entry_table} JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id WHERE {$entry_table}.object_id = '{$client_uid}' AND {$answer_table}.field_id=43";
+            $sql = "SELECT {$answer_table}.value AS cpf FROM {$entry_table} ".
+            "JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
+            "WHERE {$entry_table}.object_id = '{$client_uid}' AND {$answer_table}.field_id=43";
             $query = db_query($sql);
             return db_result($query);
         }
