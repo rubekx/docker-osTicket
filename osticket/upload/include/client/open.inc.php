@@ -8,15 +8,20 @@ if($thisclient && $thisclient->isValid()) {
                 
     $client_uid = !is_null($thisclient->getId()) ? $thisclient->getId() : null;
     $cpf_array = Validator::check_cpf_is_exist(null, $client_uid);
-    if ($cpf_array['error']==1) {        
-        $btn = "<a href='/account.php' class='btn btn-primary'>Atualizar Perfil</a>";
-        $warning ="Prezado(a) <b>{$thisclient->getName()}.</b>".
-        "<br>Estamos fazendo algumas melhorias na Central de atendimentos.".
-        "<br>A inserção de CPF válido será indispensável".
-        "<br>Caso você receba a mensagem: <b>CPF inválido</b>, clique no botão abaixo  e atualize seus dados.";
-        echo "<div class='alert alert-danger text-center'><b>{$cpf_array['msg']}!</b><br></div>";
-        echo "<div class='alert alert-danger'>{$warning}</div>";
-        echo "<div class='text-center' style='margin-bottom:10px'>{$btn}</div>";
+    if ($cpf_array['error']!=1) {        
+        $alert = "<div class='alert alert-danger text-center'>".
+                     "<b>{$cpf_array['msg']}!</b><br>".
+                 "</div>".
+                 "<div class='alert alert-danger'>Prezado(a) <b>{$thisclient->getName()}.</b><br>".
+                     "Estamos fazendo algumas melhorias na Central de atendimentos.<br>".
+                     "A inserção de CPF válido será indispensável<br>".
+                     "Caso você receba a mensagem: <b>{$cpf_array['msg']}</b>, ".
+                     "clique no botão abaixo e atualize seus dados.".
+                 "</div>".
+                 "<div class='text-center' style='margin-bottom:10px'>".
+                     "<a href='/account.php' class='btn btn-primary'>Atualizar Perfil</a>".
+                 "</div>";
+        echo $alert;
         throw new Exception($cpf_array['msg']);
     }
 }
