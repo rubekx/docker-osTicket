@@ -5,6 +5,20 @@ if($thisclient && $thisclient->isValid()) {
     $info=array('name'=>$thisclient->getName(),
                 'email'=>$thisclient->getEmail(),
                 'phone'=>$thisclient->getPhoneNumber());
+                
+    $client_uid = !is_null($thisclient->getId()) ? $thisclient->getId() : null;
+    $cpf_array = Validator::check_cpf_is_exist(null, $client_uid);
+    if ($cpf_array['error']==1) {        
+        $btn = "<a href='/account.php' class='btn btn-primary'>Atualizar Perfil</a>";
+        $warning ="Prezado(a) <b>{$thisclient->getName()}.</b>".
+        "<br>Estamos fazendo algumas melhorias na Central de atendimentos.".
+        "<br>A inserção de CPF válido será indispensável".
+        "<br>Caso você receba a mensagem: <b>CPF inválido</b>, clique no botão abaixo  e atualize seus dados.";
+        echo "<div class='alert alert-danger text-center'><b>{$cpf_array['msg']}!</b><br></div>";
+        echo "<div class='alert alert-danger'>{$warning}</div>";
+        echo "<div class='text-center' style='margin-bottom:10px'>{$btn}</div>";
+        throw new Exception($cpf_array['msg']);
+    }
 }
 
 $info=($_POST && $errors)?Format::htmlchars($_POST):$info;
@@ -72,17 +86,17 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
                           $(document.head).append(json.media);
                         }
                       });">
-                <option value="" selected="selected">&mdash; <?php echo "Curso"; /*__('Select a Help Topic');*/ ?> &mdash;</option>
                 <?php
+                echo '<option value="" selected="selected">Curso</option>';
                 if($topics=Topic::getPublicHelpTopics()) {
                     foreach($topics as $id =>$name) {
                         echo sprintf('<option value="%d" %s>%s</option>',
                                 $id, ($info['topicId']==$id)?'selected="selected"':'', $name);
                     }
-                } else { ?>
-                    <option value="0" ><?php echo __('General Inquiry');?></option>
-                <?php
-                } ?>
+                } 
+                else echo $cpf_array['erro'];
+                // echo '<option value="0">'. __("General Inquiry").'</option>';
+                ?>
             </select>
             <font class="error">*&nbsp;<?php echo $errors['topicId']; ?></font>
         </td>
