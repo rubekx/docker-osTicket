@@ -334,10 +334,12 @@ class Validator {
             "WHERE {$answer_table}.value LIKE '%{$cpf}%'";
             $query = db_query($sql);
             $user_id = db_result($query);
+            /*
             if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) 
                 return array("cpf_exist"=>1,'same_user'=>1,'error'=>0,'msg'=>'CPF válido'); 
             if(!is_null($user_id)) 
                 return array("cpf_exist"=>1,'same_user'=>0,'error'=>1,'msg'=>'O CPF informando já possui cadastrado! Por favor, entre em contato com a DTED pelo email');
+            */
         }
         return array("cpf_exist"=>0,'same_user'=>0,'error'=>1,'msg'=>'CPF inválido');
     }
