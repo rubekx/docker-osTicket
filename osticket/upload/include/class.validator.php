@@ -326,34 +326,44 @@ class Validator {
     }
 
     static function check_cpf_is_exist($cpf = null , $client_uid = null){
-        if(is_null($cpf)) $cpf = self::get_cpf($client_uid);
+        // echo 'cpf: '.var_dump($cpf).'<Br>';
+        // echo  'client_uid: '.var_dump($client_uid).'<Br>';
+        $cpf == null ? self::get_cpf($client_uid) : $cpf;
+        echo 'get_cpf: '.var_dump($cpf).'<Br>';
         if(self::check_cpf($cpf)){
-            $answer_table = FORM_ANSWER_TABLE;
-            $entry_table = FORM_ENTRY_TABLE;
-            $sql = "SELECT {$entry_table}.object_id AS client_uid FROM {$answer_table} JOIN {$entry_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
-            "WHERE {$answer_table}.value LIKE '%{$cpf}%'";
-            $query = db_query($sql);
-            $user_id = db_result($query);
-            /*
-            if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) 
-                return array("cpf_exist"=>1,'same_user'=>1,'error'=>0,'msg'=>'CPF válido'); 
-            if(!is_null($user_id)) 
-                return array("cpf_exist"=>1,'same_user'=>0,'error'=>1,'msg'=>'O CPF informando já possui cadastrado! Por favor, entre em contato com a DTED pelo email');
-            */
+            return array("cpf_exist"=>1,'error'=>0,'msg'=>'CPF válido');
         }
-        return array("cpf_exist"=>0,'same_user'=>0,'error'=>1,'msg'=>'CPF inválido');
+        return array("cpf_exist"=> 0,'error'=>1,'msg'=>'CPF inválido');
+
+
+        // if(is_null($cpf) && !is_null($client_uid)){
+        //     $cpf = self::get_cpf($client_uid);
+        //     if(self::check_cpf($cpf)) return array("cpf_exist"=>1,'error'=>0,'msg'=>'CPF válido'); 
+        // }else{
+        //     if(self::check_cpf($cpf)) return array("cpf_exist"=>1,'error'=>0,'msg'=>'CPF válido'); 
+        // $answer_table = FORM_ANSWER_TABLE;
+        // $entry_table = FORM_ENTRY_TABLE;
+        // $sql = "SELECT {$entry_table}.object_id AS client_uid FROM {$answer_table} JOIN {$entry_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
+        // "WHERE {$answer_table}.value LIKE '%{$cpf}%'";
+        // $query = db_query($sql);
+        // $user_id = db_result($query);
+        // if(!is_null($user_id) && !is_null($client_uid) && $user_id == $client_uid ) 
+        //     return array("cpf_exist"=>1,'same_user'=>1,'error'=>0,'msg'=>'CPF válido'); 
+        // if(!is_null($user_id)) 
+        //     return array("cpf_exist"=>1,'same_user'=>0,'error'=>1,'msg'=>'O CPF informando já possui cadastrado! Por favor, entre em contato com a DTED pelo email');
+
+        
+        
     }
 
     static function get_cpf($client_uid){
         if(is_numeric($client_uid)){
             $answer_table = FORM_ANSWER_TABLE;
             $entry_table = FORM_ENTRY_TABLE;
-            $sql="SELECT {$answer_table}.value AS cpf FROM {$entry_table} JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
-            "WHERE {$entry_table}.object_id ='{$client_uid}' AND {$answer_table}.field_id=43";
+            $sql= "SELECT {$answer_table}.value AS cpf FROM {$entry_table} JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id WHERE {$entry_table}.object_id = '{$client_uid}' AND {$answer_table}.field_id=43";
             $query = db_query($sql);
-            $cpf = db_result($query);
-            return $cpf;
-        }        
+            return db_result($query);
+        }      
         return null;
     }
 }
