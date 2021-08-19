@@ -8,7 +8,7 @@ if($thisclient && $thisclient->isValid()) {
                 
     $client_uid = !is_null($thisclient->getId()) ? $thisclient->getId() : null;
     $cpf_array = Validator::check_cpf_is_exist(null, $client_uid);
-    if ($cpf_array['error']!=1) {        
+    if ($cpf_array['error']==1) {        
         $alert = "<div class='alert alert-danger text-center'>".
                      "<b>{$cpf_array['msg']}!</b><br>".
                  "</div>".
