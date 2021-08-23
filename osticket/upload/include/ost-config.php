@@ -41,7 +41,7 @@ define('ADMIN_EMAIL','genilsonsoares.b@gmail.com');
 define('DBTYPE','mysql');
 define('DBHOST','osticket-mysql'); // DOCKER HOST
 // define('DBHOST','localhost'); LOCALHOST
-define('DBNAME','osticketdb');
+define('DBNAME','osticketdb_old');
 define('DBUSER','root');
 define('DBPASS','123456');
 
