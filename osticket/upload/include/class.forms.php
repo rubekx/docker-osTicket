@@ -1487,6 +1487,7 @@ class TextboxField extends FormField {
                 __('Enter a valid phone number')),
             'ip' =>     array(array('Validator', 'is_ip'),
                 __('Enter a valid IP address')),
+            'number' => array(array('Validator', 'is_numeric'),
                 __('Enter a number')),
             'password' => array(array('Validator', 'check_passwd'),
                 __('Invalid Password')),
@@ -1503,8 +1504,7 @@ class TextboxField extends FormField {
                     }
                 }
                 return true;
-            }, 'Digite um CPF válido'),
-            'number' => array(array('Validator', 'is_numeric'),
+            }, 'Digite um CPF válido'),            
             'regex' => array(
                 function($v) use ($config) {
                     $regex = $config['regex'];
