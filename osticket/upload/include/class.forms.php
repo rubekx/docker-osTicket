@@ -1491,20 +1491,8 @@ class TextboxField extends FormField {
                 __('Enter a number')),
             'password' => array(array('Validator', 'check_passwd'),
                 __('Invalid Password')),
-            'cpf' => array(function ($v) {
-                $v = preg_replace( '/[^0-9]/is', '', $v );                
-                if (strlen($v) !== 11 || preg_match('/(\d)\1{10}/', $v)) return false;                
-                for ($t = 9; $t < 11; $t++) {
-                    for ($d = 0, $c = 0; $c < $t; $c++) {
-                        $d += $v{$c} * (($t + 1) - $c);
-                    }
-                    $d = ((10 * $d) % 11) % 10;
-                    if ($v{$c} != $d) {
-                        return false;
-                    }
-                }
-                return true;
-            }, 'Digite um CPF válido'),            
+            'cpf' => array(array('Validator', 'is_cpf'),
+            __('Digite um CPF válido')),         
             'regex' => array(
                 function($v) use ($config) {
                     $regex = $config['regex'];
