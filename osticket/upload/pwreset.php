@@ -16,21 +16,19 @@ if($_POST) {
     switch ($_POST['do']) {
         case 'sendmail':
             if (($acct=ClientAccount::lookupByUsername($_POST['userid']))) {
-                if (!$acct->isPasswdResetEnabled()) { // lembrar senha por email esta desligado , apenas a mensagem
+                if (!$acct->isPasswdResetEnabled()) {
                     $banner = __('Password reset is not enabled for your account. Contact your administrator');
                 }
                 elseif ($acct->sendResetEmail()) {
-                    $inc = 'pwreset.sent.php'; // pagina que dizendo que foi enviado
+                    $inc = 'pwreset.sent.php';
                 }
                 else
-                    $banner = __('Unable to send reset email.') // mensagem de erro
+                    $banner = __('Unable to send reset email.')
                         .' '.__('Internal error occurred');
             }
             else
                 $banner = sprintf(__('Unable to verify username %s'),
                     Format::htmlchars($_POST['userid']));
-
-                $errors['deuErro']=true; // variavel criada por mim , para saber se mostra painel vermelho ou não
             break;
         case 'reset':
             $inc = 'pwreset.login.php';
@@ -75,12 +73,8 @@ elseif ($_GET['token']) {
     else
         Http::redirect('index.php');
 }
-elseif ($cfg->allowPasswordReset()) {
-    $banner = __('Enter your username or email address below');
-}
 else {
-    $_SESSION['_staff']['auth']['msg']=__('Password resets are disabled');
-    return header('Location: index.php');
+    $banner = __('Enter your username or email address below');
 }
 
 $nav = new UserNav();

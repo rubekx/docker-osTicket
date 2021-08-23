@@ -4,7 +4,7 @@ if (!defined('OSTSCPINC') || !$thisstaff
     die('Access Denied');
 
 $info = $qs = array();
-if($faq){
+if($faq && $faq->getId()){
     $title=__('Update FAQ').': '.$faq->getQuestion();
     $action='update';
     $submit_text=__('Save Changes');
@@ -38,7 +38,7 @@ if($faq){
     }
 }
 //TODO: Add attachment support.
-$info=Format::htmlchars(($errors && $_POST)?$_POST:$info);
+$info=Format::htmlchars(($errors && $_POST)?$_POST:$info, true);
 $qstr = Http::build_query($qs);
 ?>
 <form action="faq.php?<?php echo $qstr; ?>" method="post" class="save" enctype="multipart/form-data">
@@ -63,7 +63,7 @@ $qstr = Http::build_query($qs);
         <option value="<?php echo $C->getId(); ?>" <?php
             if ($C->getId() == $info['category_id']) echo 'selected="selected"';
             ?>><?php echo sprintf('%s (%s)',
-                $C->getName(),
+                Category::getNameById($C->getId()),
                 $C->isPublic() ? __('Public') : __('Private')
             ); ?></option>
 <?php } ?>
@@ -250,7 +250,7 @@ echo $attrs; ?>><?php echo $draft ?: $answer;
     </div>
     <div style="margin-top:10px"></div>
     <textarea class="richtext no-bar" name="notes" cols="21"
-        rows="8" style="width: 80%;"><?php echo $info['notes']; ?></textarea>
+        rows="8" style="width: 80%;"><?php echo Format::sanitize($info['notes']); ?></textarea>
 </div>
 
 <p style="text-align:center;">

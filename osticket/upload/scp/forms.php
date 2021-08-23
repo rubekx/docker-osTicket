@@ -8,6 +8,7 @@ if($_REQUEST['id'] && !($form=DynamicForm::lookup($_REQUEST['id'])))
 
 if($_POST) {
     $_POST = Format::htmlchars($_POST, true);
+    $_POST['instructions'] = Format::htmldecode($_POST['instructions']);
     $fields = array('title', 'notes', 'instructions');
     $required = array('title');
     $max_sort = 0;
@@ -64,6 +65,8 @@ if($_POST) {
                 // Keep track of the last sort number
                 $max_sort = max($max_sort, $field->get('sort'));
             }
+            $type = array('type' => 'edited');
+            Signal::send('object.edited', $form, $type);
             break;
         case 'add':
             $form = DynamicForm::create();
@@ -74,6 +77,8 @@ if($_POST) {
                 elseif (isset($_POST[$f]))
                     $form->set($f, $_POST[$f]);
             }
+            $type = array('type' => 'created');
+            Signal::send('object.created', $form, $type);
             break;
 
         case 'mass_process':

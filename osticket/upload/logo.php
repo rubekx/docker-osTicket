@@ -24,12 +24,9 @@ define('DISABLE_SESSION', true);
 require('client.inc.php');
 
 if (($logo = $ost->getConfig()->getClientLogo())) {
-    //header('Location: '.ASSETS_PATH.'images/dinte_logo.png');
-    header('Location: '.ASSETS_PATH.'images/dted_logo.png');
-    // $logo->display();
+    $logo->display();
 } else {
-    //header('Location: '.ASSETS_PATH.'images/dinte_logo.png');
-    header('Location: '.ASSETS_PATH.'images/dted_logo.png');
+    header('Location: '.ASSETS_PATH.'images/logo.png');
 }
 
 ?>

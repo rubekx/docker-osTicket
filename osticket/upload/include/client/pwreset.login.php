@@ -12,10 +12,7 @@ $userid=Format::input($_POST['userid']);
     <?php csrf_token(); ?>
     <input type="hidden" name="do" value="reset"/>
     <input type="hidden" name="token" value="<?php echo Format::htmlchars($_REQUEST['token']); ?>"/>
-
-        <strong><?php echo Format::htmlchars($banner); ?></strong>
-
-
+    <strong><?php echo Format::htmlchars($banner); ?></strong>
     <br>
     <div>
         <label for="username"><?php echo __('Username'); ?>:</label>

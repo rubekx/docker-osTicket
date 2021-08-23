@@ -17,7 +17,6 @@
     vim: expandtab sw=4 ts=4 sts=4:
 **********************************************************************/
 require_once('client.inc.php');
-
 if(!defined('INCLUDE_DIR')) die('Fatal Error');
 define('CLIENTINC_DIR',INCLUDE_DIR.'client/');
 define('OSTCLIENTINC',TRUE); //make includes happy
@@ -46,11 +45,10 @@ if ($_POST) {
     $ost->getCSRF()->rotate();
 }
 
-
 if ($_POST && isset($_POST['luser'])) {
     if (!$_POST['luser'])
         $errors['err'] = __('Valid username or email address is required');
-    elseif (($user = UserAuthenticationBackend::process($_POST['luser'],
+    elseif (($user = UserAuthenticationBackend::process(trim($_POST['luser']),
             $_POST['lpasswd'], $errors))) {
         if ($user instanceof ClientCreateRequest) {
             if ($cfg && $cfg->isClientRegistrationEnabled()) {
@@ -75,15 +73,12 @@ if ($_POST && isset($_POST['luser'])) {
         $errors['err'] = sprintf('%s - %s', __('Invalid username or password'), __('Please try again!'));
     }
     $suggest_pwreset = true;
-
 }
 elseif ($_POST && isset($_POST['lticket'])) {
-
     if (!Validator::is_email($_POST['lemail']))
         $errors['err'] = __('Valid email address and ticket number required');
     elseif (($user = UserAuthenticationBackend::process($_POST['lemail'],
             $_POST['lticket'], $errors))) {
-
 
         // If email address verification is not required, then provide
         // immediate access to the ticket!
@@ -93,15 +88,18 @@ elseif ($_POST && isset($_POST['lticket'])) {
         // This will succeed as it is checked in the authentication backend
         $ticket = Ticket::lookupByNumber($_POST['lticket'], $_POST['lemail']);
 
-
         // We're using authentication backend so we can guard aganist brute
         // force attempts (which doesn't buy much since the link is emailed)
-
-        $ticket->sendAccessLink($user);
-
-        $msg = sprintf(__("%s - access link sent to your email!"),
-            Format::htmlchars($user->getName()->getFirst()));
-        $_POST = null;
+        if ($ticket) {
+            $ticket->sendAccessLink($user);
+            $msg = sprintf(__("%s - access link sent to your email!"),
+                Format::htmlchars($user->getName()->getFirst()));
+            $_POST = null;
+        } else {
+            $errors['err'] = sprintf('%s - %s',
+                __('Invalid email or ticket number'),
+                __('Please try again!'));
+        }
     } elseif(!$errors['err']) {
         $errors['err'] = sprintf('%s - %s', __('Invalid email or ticket number'), __('Please try again!'));
     }
@@ -110,8 +108,12 @@ elseif (isset($_GET['do'])) {
     switch($_GET['do']) {
     case 'ext':
         // Lookup external backend
-        if ($bk = UserAuthenticationBackend::getBackend($_GET['bk']))
-            $bk->triggerAuth();
+        if ($bk = UserAuthenticationBackend::getBackend($_GET['bk'])) {
+            $result = $bk->triggerAuth();
+            if ($result instanceof AccessDenied) {
+                $errors['err'] = $result->getMessage();
+            }
+        }
     }
 }
 elseif ($user = UserAuthenticationBackend::processSignOn($errors, false)) {

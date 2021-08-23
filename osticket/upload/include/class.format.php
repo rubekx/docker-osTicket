@@ -42,7 +42,16 @@ class Format {
         return $size;
     }
 
+    function filename($filename) {
+        return preg_replace('/[^a-zA-Z0-9\-\._]/', '-', $filename);
+    }
+
     function mimedecode($text, $encoding='UTF-8') {
+        // Handle poorly or completely un-encoded header values (
+        if (function_exists('mb_detect_encoding'))
+            if (($src_enc = mb_detect_encoding($text))
+                    && (strcasecmp($src_enc, 'ASCII') !== 0))
+                return Charset::transcode($text, $src_enc, $encoding);
 
         if(function_exists('imap_mime_header_decode')
                 && ($parts = imap_mime_header_decode($text))) {
@@ -138,7 +147,7 @@ class Format {
             $xpath = new DOMXPath($doc);
             static $eE = array('area'=>1, 'br'=>1, 'col'=>1, 'embed'=>1,
                     'iframe' => 1, 'hr'=>1, 'img'=>1, 'input'=>1,
-                    'isindex'=>1, 'param'=>1);
+                    'isindex'=>1, 'param'=>1, 'div'=>1);
             do {
                 $done = true;
                 $nodes = $xpath->query('//*[not(text()) and not(node())]');
@@ -286,6 +295,7 @@ class Format {
     }
 
     function safe_html($html, $options=array()) {
+        global $cfg;
 
         $options = array_merge(array(
                     // Balance html tags
@@ -307,8 +317,10 @@ class Format {
                   ':<\?[^>]+>:',                # <?xml version="1.0" ... >
                   ':<html[^>]+:i',              # drop html attributes
                   ':<(a|span) (name|style)="(mso-bookmark\:)?_MailEndCompose">(.+)?<\/(a|span)>:', # Drop _MailEndCompose
+                  ':<div dir=(3D)?"ltr">(.*?)<\/div>(.*):is', # drop Gmail "ltr" attributes
+                  ':data-cid="[^"]*":',         # drop image cid attributes
             ),
-            array('', '', '', '', '<html', '$4'),
+            array('', '', '', '', '<html', '$4', '$2 $3', ''),
             $html);
 
         // HtmLawed specific config only
@@ -317,13 +329,20 @@ class Format {
             'balance' => $options['balance'],
             'comment' => 1, //Remove html comments (OUTLOOK LOVE THEM)
             'tidy' => -1,
-            'deny_attribute' => 'id',
+            'deny_attribute' => 'id, formaction, on*',
             'schemes' => 'href: aim, feed, file, ftp, gopher, http, https, irc, mailto, news, nntp, sftp, ssh, telnet; *:file, http, https; src: cid, http, https, data',
             'hook_tag' => function($e, $a=0) { return Format::__html_cleanup($e, $a); },
-            'elements' => '*+iframe',
-            'spec' =>
-            'iframe=-*,height,width,type,style,src(match="`^(https?:)?//(www\.)?(youtube|dailymotion|vimeo|player.vimeo)\.com/`i"),frameborder'.($options['spec'] ? '; '.$options['spec'] : ''),
         );
+
+        // iFrame Whitelist
+        if ($cfg)
+            $whitelist = $cfg->getIframeWhitelist();
+        if (!empty($whitelist)) {
+            $config['elements'] = '*+iframe';
+            $config['spec'] = 'iframe=-*,height,width,type,style,src(match="`^(https?:)?//(www\.)?('
+                .implode('|', $whitelist)
+                .')/?`i"),frameborder'.($options['spec'] ? '; '.$options['spec'] : '').',allowfullscreen';
+        }
 
         return Format::html($html, $config);
     }
@@ -392,13 +411,30 @@ class Format {
 
     //Format text for display..
     function display($text, $inline_images=true, $balance=true) {
+        global $cfg;
+
+        // Exclude external images?
+        $exclude = !$cfg->allowExternalImages();
+        // Allowed image extensions
+        $allowed = array('gif', 'png', 'jpg', 'jpeg');
+
         // Make showing offsite images optional
         $text = preg_replace_callback('/<img ([^>]*)(src="http[^"]+")([^>]*)\/>/',
-            function($match) {
-                // Drop embedded classes -- they don't refer to ours
-                $match = preg_replace('/class="[^"]*"/', '', $match);
-                return sprintf('<span %s class="non-local-image" data-%s %s></span>',
-                    $match[1], $match[2], $match[3]);
+            function($match) use ($exclude, $allowed) {
+                $m = array();
+                // Split the src URL and get the extension
+                preg_match('/src="([^"]+)"/', $match[2], $m);
+                $part = parse_url($m[1], PHP_URL_PATH);
+                $path = explode('.', $part);
+                $ext = preg_split('/[^A-Za-z]/', end($path))[0];
+
+                if (!$exclude && in_array($ext, $allowed)) {
+                    // Drop embedded classes -- they don't refer to ours
+                    $match = preg_replace('/class="[^"]*"/', '', $match);
+                    return sprintf('<span %s class="non-local-image" data-%s %s></span>',
+                        $match[1], $match[2], $match[3]);
+                } else
+                    return '';
             },
             $text);
 
@@ -414,12 +450,73 @@ class Format {
         return $text;
     }
 
+    function stripExternalImages($input, $display=false) {
+        global $cfg;
+
+        // Allowed Inline External Image Extensions
+        $allowed = array('gif', 'png', 'jpg', 'jpeg');
+        $exclude = !$cfg->allowExternalImages();
+        $local = false;
+
+        $input = preg_replace_callback('/<img ([^>]*)(src="([^"]+)")([^>]*)\/?>/',
+            function($match) use ($local, $allowed, $exclude, $display) {
+                if (strpos($match[3], 'cid:') !== false)
+                    $local = true;
+
+                // Split the src URL and get the extension
+                $part = parse_url($match[3], PHP_URL_PATH);
+                $path = explode('.', $part);
+                $ext = preg_split('/[^A-Za-z]/', end($path))[0];
+
+                if (!$local && (($exclude && $display) || !in_array($ext, $allowed)))
+                    return '';
+                else
+                    return $match[0];
+            },
+            $input);
+
+        return $input;
+    }
+
     function striptags($var, $decode=true) {
 
         if(is_array($var))
             return array_map(array('Format','striptags'), $var, array_fill(0, count($var), $decode));
 
         return strip_tags($decode?Format::htmldecode($var):$var);
+    }
+
+    // Strip all Emoticon/Emoji characters until we support them
+    function strip_emoticons($text) {
+        return preg_replace(array(
+                '/[\x{1F601}-\x{1F64F}]/u', # Emoticons
+                '/[\x{1F680}-\x{1F6C0}]/u', # Transport/Map
+                '/[\x{1F600}-\x{1F636}]/u', # Add. Emoticons
+                '/[\x{1F681}-\x{1F6C5}]/u', # Add. Transport/Map
+                '/[\x{1F30D}-\x{1F567}]/u', # Other
+                '/[\x{1F910}-\x{1F999}]/u', # Hands
+                '/[\x{1F9D0}-\x{1F9DF}]/u', # Fantasy
+                '/[\x{1F9E0}-\x{1F9EF}]/u', # Clothes
+                '/[\x{1F6F0}-\x{1F6FF}]/u', # Misc. Transport
+                '/[\x{1F6E0}-\x{1F6EF}]/u', # Planes/Boats
+                '/[\x{1F6C0}-\x{1F6CF}]/u', # Bed/Bath
+                '/[\x{1F9C0}-\x{1F9C2}]/u', # Misc. Food
+                '/[\x{1F6D0}-\x{1F6D2}]/u', # Sign/P.O.W./Cart
+                '/[\x{1F500}-\x{1F5FF}]/u', # Uncategorized
+                '/[\x{1F300}-\x{1F3FF}]/u', # Cyclone/Amphora
+                '/[\x{2702}-\x{27B0}]/u',   # Dingbats
+                '/[\x{00A9}-\x{00AE}]/u',   # Copyright/Registered
+                '/[\x{23F0}-\x{23FF}]/u',   # Clock/Buttons
+                '/[\x{23E0}-\x{23EF}]/u',   # More Buttons
+                '/[\x{2310}-\x{231F}]/u',   # Hourglass/Watch
+                '/[\x{1000B6}]/u',          # Private Use Area (Plane 16)
+                '/[\x{2322}-\x{232F}]/u'    # Keyboard
+            ), '', $text);
+    }
+
+    // Insert </br> tag inside empty <p> tags to ensure proper editor spacing
+    function editor_spacing($text) {
+        return preg_replace('/<p><\/p>/', '<p><br></p>', $text);
     }
 
     //make urls clickable. Mainly for display
@@ -431,8 +528,8 @@ class Format {
             function($match) {
                 // Scan for things that look like URLs
                 return preg_replace_callback(
-                    '`(?<!>)(((f|ht)tp(s?)://|(?<!//)www\.)([-+~%/.\w]+)(?:[-?#+=&;%@.\w]*)?)'
-                   .'|(\b[_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,4})`',
+                    '`(?<!>)(((f|ht)tp(s?)://|(?<!//)www\.)([-+~%/.\w]+)(?:[-?#+=&;%@.\w\[\]\/]*)?)'
+                   .'|(\b[_\.0-9a-z-]+@([0-9a-z][0-9a-z-]+\.)+[a-z]{2,63})`',
                     function ($match) {
                         if ($match[1]) {
                             while (in_array(substr($match[1], -1),
@@ -461,14 +558,17 @@ class Format {
     }
 
 
-    function viewableImages($html, $script=false) {
+    function viewableImages($html, $options=array()) {
         $cids = $images = array();
+        $options +=array(
+                'disposition' => 'inline');
         return preg_replace_callback('/"cid:([\w._-]{32})"/',
-        function($match) use ($script, $images) {
+        function($match) use ($options, $images) {
             if (!($file = AttachmentFile::lookup($match[1])))
                 return $match[0];
+
             return sprintf('"%s" data-cid="%s"',
-                $file->getDownloadUrl(false, 'inline', $script), $match[1]);
+                $file->getDownloadUrl($options), $match[1]);
         }, $html);
     }
 
@@ -498,6 +598,53 @@ class Format {
         return implode( $separator, $string );
     }
 
+    function number($number, $locale=false) {
+        if (is_array($number))
+            return array_map(array('Format','number'), $number);
+
+        if (!is_numeric($number))
+            return $number;
+
+        if (extension_loaded('intl') && class_exists('NumberFormatter')) {
+            $nf = NumberFormatter::create($locale ?: Internationalization::getCurrentLocale(),
+                NumberFormatter::DECIMAL);
+            return $nf->format($number);
+        }
+
+        return number_format((int) $number);
+    }
+
+    /*
+     * Add ORDINAL suffix to a number e.g 1st, 2nd, 3rd etc.
+     * TODO: Combine this routine with Format::number and pass in type of
+     * formatting.
+     */
+    function ordinalsuffix($number, $locale=false) {
+        if (is_array($number))
+            return array_map(array('Format', 'ordinalsuffix'), $number);
+
+        if (!is_numeric($number))
+            return $number;
+
+        if (extension_loaded('intl') && class_exists('NumberFormatter')) {
+            $nf = new NumberFormatter($locale ?:
+                    Internationalization::getCurrentLocale(),
+                    NumberFormatter::ORDINAL);
+            return $nf->format($number);
+        }
+
+        // Default to English ordinal
+        if (!in_array(($number % 100), [11,12,13])) {
+            switch ($number % 10) {
+            case 1:  return $number.'st';
+            case 2:  return $number.'nd';
+            case 3:  return $number.'rd';
+            }
+        }
+
+        return $number.'th';
+    }
+
     /* elapsed time */
     function elapsedTime($sec) {
 
@@ -525,12 +672,18 @@ class Format {
         if (!$timestamp || !($datetime = DateTime::createFromFormat('U', $timestamp)))
             return '';
 
+        // Normalize timezone
+        if ($timezone)
+            $timezone = Format::timezone($timezone);
+
         // Set the desired timezone (caching since it will be mostly same
         // for most date formatting.
+        $timezone = Format::timezone($timezone, $cfg->getTimezone());
         if (isset($cache[$timezone]))
             $tz =  $cache[$timezone];
         else
-            $cache[$timezone] = $tz = new DateTimeZone($timezone ?: $cfg->getTimezone());
+            $cache[$timezone] = $tz = new DateTimeZone($timezone);
+
         $datetime->setTimezone($tz);
 
         // Formmating options
@@ -558,11 +711,6 @@ class Format {
         $timezone = $datetime->getTimeZone();
         // Use IntlDateFormatter if available
         if (class_exists('IntlDateFormatter')) {
-
-            if ($cfg && $cfg->isForce24HourTime())
-                $format = str_replace(array('a', 'h'), array('', 'H'),
-                        $format);
-
             $options += array(
                     'pattern' => $format,
                     'timezone' => $timezone->getName());
@@ -579,6 +727,9 @@ class Format {
         // Change format to strftime format otherwise us a fallback format
         $format = self::getStrftimeFormat($format) ?: $options['strftime']
             ?:  '%x %X';
+        if ($cfg && $cfg->isForce24HourTime())
+            $format = str_replace('X', 'R', $format);
+
         return strftime($format, $timestamp);
     }
 
@@ -630,6 +781,8 @@ class Format {
             $tz = $datetime->getTimezone()->getName();
             if ($tz && $tz[0] == '+' || $tz[0] == '-')
                 $tz = (int) $datetime->format('Z');
+            elseif ($tz == 'Z')
+                $tz = 'UTC';
             $timezone =  new DateTimeZone(Format::timezone($tz) ?: 'UTC');
             $datetime->setTimezone($timezone);
         } catch (Exception $ex) {
@@ -660,20 +813,20 @@ class Format {
             '%x', $timezone ?: $cfg->getTimezone(), $user);
     }
 
-    function datetime($timestamp, $fromDb=true, $timezone=false, $user=false) {
+    function datetime($timestamp, $fromDb=true, $format=false,  $timezone=false, $user=false) {
         global $cfg;
 
         return self::__formatDate($timestamp,
-                $cfg->getDateTimeFormat(), $fromDb,
+                $format ?: $cfg->getDateTimeFormat(), $fromDb,
                 IDF_SHORT, IDF_SHORT,
                 '%x %X', $timezone ?: $cfg->getTimezone(), $user);
     }
 
-    function daydatetime($timestamp, $fromDb=true, $timezone=false, $user=false) {
+    function daydatetime($timestamp, $fromDb=true, $format=false,  $timezone=false, $user=false) {
         global $cfg;
 
         return self::__formatDate($timestamp,
-                $cfg->getDayDateTimeFormat(), $fromDb,
+                $format ?: $cfg->getDayDateTimeFormat(), $fromDb,
                 IDF_FULL, IDF_SHORT,
                 '%x %X', $timezone ?: $cfg->getTimezone(), $user);
     }
@@ -740,9 +893,46 @@ class Format {
         );
     }
 
+    // Translate php date / time formats to js equivalent
+    function dtfmt_php2js($format) {
+
+        $codes = array(
+        // Date
+        'DD' => 'oo',
+        'D' => 'o',
+        'EEEE' => 'DD',
+        'EEE' => 'D',
+        'MMMM' => '||',
+        'MMM' => '|',
+        'MM' => 'mm',
+        'M' =>  'm',
+        '||' => 'MM',
+        '|' => 'M',
+        'yyyy' => 'YY',
+        'yyy' => 'YY',
+        'yy' =>  'Y',
+        'y' => 'yy',
+        'YY' =>  'yy',
+        'Y' => 'y',
+        // Time
+        'a' => 'tt',
+        'HH' => 'H',
+        'H' => 'HH',
+        );
+
+        return str_replace(array_keys($codes), array_values($codes), $format);
+    }
+
     // Thanks, http://stackoverflow.com/a/2955878/1025836
     /* static */
     function slugify($text) {
+        // convert special characters to entities
+        $text = htmlentities($text, ENT_NOQUOTES, 'UTF-8');
+
+        // removes entity suffixes, leaving only un-accented characters
+        $text = preg_replace('~&([A-za-z])(?:acute|cedil|circ|grave|orn|ring|slash|th|tilde|uml);~', '$1', $text);
+        $text = preg_replace('~&([A-za-z]{2})(?:lig);~', '$1', $text);
+
         // replace non letter or digits by -
         $text = preg_replace('~[^\p{L}\p{N}]+~u', '-', $text);
 
@@ -894,17 +1084,10 @@ class Format {
           return sprintf($timeDiff >= 0 ? __('%d hours ago') : __('in %d hours'), $absTimeDiff / 3600);
         }
 
-        // within 2 days
-        $days2 = 2 * 86400;
-        if ($absTimeDiff < $days2) {
-            // XXX: yesterday / tomorrow?
-          return $absTimeDiff >= 0 ? __('yesterday') : __('tomorrow');
-        }
-
         // within 29 days
         $days29 = 29 * 86400;
         if ($absTimeDiff < $days29) {
-          return sprintf($timeDiff >= 0 ? __('%d days ago') : __('in %d days'), $absTimeDiff / 86400);
+          return sprintf($timeDiff >= 0 ? __('%d days ago') : __('in %d days'), round($absTimeDiff / 86400));
         }
 
         // within 60 days
@@ -994,11 +1177,11 @@ implements TemplateVariable {
         case 'short':
             return Format::date($this->date, $this->fromdb, false, $this->timezone, $this->user);
         case 'long':
-            return Format::datetime($this->date, $this->fromdb, $this->timezone, $this->user);
+            return Format::datetime($this->date, $this->fromdb, false, $this->timezone, $this->user);
         case 'time':
             return Format::time($this->date, $this->fromdb, false, $this->timezone, $this->user);
         case 'full':
-            return Format::daydatetime($this->date, $this->fromdb, $this->timezone, $this->user);
+            return Format::daydatetime($this->date, $this->fromdb, false, $this->timezone, $this->user);
         }
     }
 

@@ -1,5 +1,4 @@
 <?php
-
 /*********************************************************************
     view.php
 
@@ -15,12 +14,6 @@
     vim: expandtab sw=4 ts=4 sts=4:
     $Id: $
 **********************************************************************/
-
-// if(strpos($_SERVER['HTTP_HOST'],'nead.ufma.br')!==FALSE){
-//     header("Location: http://www.atendimento.dted.ufma.br/view.php");
-//     exit();
-// }
-
 require_once('client.inc.php');
 
 $errors = array();
@@ -46,6 +39,8 @@ elseif (isset($_GET['auth']) || isset($_GET['t'])) {
 
 if (@$user && is_object($user) && $user->getTicketId())
     Http::redirect('tickets.php?id='.$user->getTicketId());
+elseif ($thisclient && isset($_GET['id']) && is_numeric($_GET['t']))
+    Http::redirect('tickets.php?id='.$_GET['id']);
 
 $nav = new UserNav();
 $nav->setActiveNav('status');
