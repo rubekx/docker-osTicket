@@ -227,6 +227,8 @@ implements TemplateVariable, Searchable {
             elseif (!$name)
                 list($name) = explode('@', $vars['email'], 2);
 
+            if(!Validator::check_cpf($vars['cpf'])) return false;
+
             $user = new User(array(
                 'name' => Format::htmldecode(Format::sanitize($name, false)),
                 'created' => new SqlFunction('NOW'),

@@ -1429,7 +1429,7 @@ class TextboxField extends FormField {
             'validator' => new ChoiceField(array(
                 'id'=>3, 'label'=>__('Validator'), 'required'=>false, 'default'=>'',
                 'choices' => array('phone'=>__('Phone Number'),'email'=>__('Email Address'),
-                    'ip'=>__('IP Address'), 'number'=>__('Number'),
+                    'ip'=>__('IP Address'), 'number'=>__('Number'),'cpf' => __('CPF'),
                     'regex'=>__('Custom (Regular Expression)'), ''=>__('None')))),
             'regex' => new TextboxField(array(
                 'id'=>6, 'label'=>__('Regular Expression'), 'required'=>true,
@@ -1487,10 +1487,24 @@ class TextboxField extends FormField {
                 __('Enter a valid phone number')),
             'ip' =>     array(array('Validator', 'is_ip'),
                 __('Enter a valid IP address')),
-            'number' => array(array('Validator', 'is_numeric'),
                 __('Enter a number')),
             'password' => array(array('Validator', 'check_passwd'),
                 __('Invalid Password')),
+            'cpf' => array(function ($v) {
+                $v = preg_replace( '/[^0-9]/is', '', $v );                
+                if (strlen($v) !== 11 || preg_match('/(\d)\1{10}/', $v)) return false;                
+                for ($t = 9; $t < 11; $t++) {
+                    for ($d = 0, $c = 0; $c < $t; $c++) {
+                        $d += $v{$c} * (($t + 1) - $c);
+                    }
+                    $d = ((10 * $d) % 11) % 10;
+                    if ($v{$c} != $d) {
+                        return false;
+                    }
+                }
+                return true;
+            }, 'Digite um CPF válido'),
+            'number' => array(array('Validator', 'is_numeric'),
             'regex' => array(
                 function($v) use ($config) {
                     $regex = $config['regex'];

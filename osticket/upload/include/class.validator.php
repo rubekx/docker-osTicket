@@ -146,6 +146,10 @@ class Validator {
                             $this->errors[$k]=$field['error'];
                 }
                 break;
+            case 'cpf':
+                if (!self::is_cpf($this->input[$k])) 
+                    $this->errors[$k] = $field['error'];        
+                break;
             default://If param type is not set...or handle..error out...
                 $this->errors[$k]=$field['error'].' '.__('(type not set)');
             endswitch;
@@ -230,6 +234,9 @@ class Validator {
             $error = __('Content cannot start with the following characters: = - + @');
         return $error == '';
     }
+    public static function is_cpf($cpf){
+        return self::check_cpf($cpf);
+    }
 
     static function check_passwd($passwd, &$error='') {
         try {
@@ -239,6 +246,7 @@ class Validator {
         }
         return $error == '';
     }
+
 
     /*
      * check_ip
@@ -372,6 +380,49 @@ class Validator {
             return false;
 
         return true;
+    }
+
+    public static function check_cpf($cpf){
+        $cpf = preg_replace('/[^0-9]/is', '', $cpf);
+        if (!is_numeric($cpf)) {
+            return false;
+        }
+
+        if (strlen($cpf) !== 11 || preg_match('/(\d)\1{10}/', $cpf)) {
+            return false;
+        }
+
+        for ($t = 9; $t < 11; $t++) {
+            for ($d = 0, $c = 0; $c < $t; $c++) {
+                $d += $cpf{$c} * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ($cpf{$c} != $d) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static function check_cpf_is_exist($cpf = null, $client_uid = null){
+        $cpf = $cpf == null ? self::get_cpf($client_uid) : $cpf;
+        if (self::check_cpf($cpf)) {
+            return array("cpf_exist" => 1, 'error' => 0, 'msg' => 'CPF válido');
+        }
+        return array("cpf_exist" => 0, 'error' => 1, 'msg' => 'CPF inválido');
+    }
+
+    public static function get_cpf($client_uid){
+        if (is_numeric($client_uid)) {
+            $answer_table = FORM_ANSWER_TABLE;
+            $entry_table = FORM_ENTRY_TABLE;
+            $sql = "SELECT {$answer_table}.value AS cpf FROM {$entry_table} ".
+            "JOIN {$answer_table} ON {$entry_table}.id = {$answer_table}.entry_id ".
+            "WHERE {$entry_table}.object_id = '{$client_uid}' AND {$answer_table}.field_id=43";
+            $query = db_query($sql);
+            return db_result($query);
+        }
+        return null;
     }
 }
 ?>
