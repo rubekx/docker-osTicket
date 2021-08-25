@@ -26,7 +26,7 @@ if ($_POST) {
         if(!$_POST['captcha'])
             $errors['captcha']=__('Enter text shown on the image');
         elseif(strcmp($_SESSION['captcha'], md5(strtoupper($_POST['captcha']))))
-            $errors['captcha']=sprintf('%s - %s', __('Invalid'), __('Please try again!'));
+            $errors['captcha']=__('Invalid - try again!');
     }
 
     $tform = TicketForm::objects()->one()->getForm($vars);
@@ -51,8 +51,7 @@ if ($_POST) {
             session_write_close();
             session_regenerate_id();
             @header('Location: tickets.php?id='.$ticket->getId());
-        } else
-            $ost->getCSRF()->rotate();
+        }
     }else{
         $errors['err'] = $errors['err'] ?: sprintf('%s %s',
             __('Unable to create a ticket.'),
@@ -86,8 +85,7 @@ if ($ticket
     echo Format::viewableImages(
         $ticket->replaceVars(
             $page->getLocalBody()
-        ),
-        ['type' => 'P']
+        )
     );
 }
 else {

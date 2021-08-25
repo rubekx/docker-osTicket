@@ -1,20 +1,12 @@
 <?php
 if(!defined('OSTCLIENTINC') || !$thisclient || !$ticket || !$ticket->checkUserAccess($thisclient)) die('Access Denied!');
-
 $info=($_POST && $errors)?Format::htmlchars($_POST):array();
-
-$type = array('type' => 'viewed');
-Signal::send('object.view', $ticket, $type);
-
 $dept = $ticket->getDept();
-
 if ($ticket->isClosed() && !$ticket->isReopenable())
     $warn = sprintf(__('%s is marked as closed and cannot be reopened.'), __('This ticket'));
-
 //Making sure we don't leak out internal dept names
 if(!$dept || !$dept->isPublic())
     $dept = $cfg->getDefaultDept();
-
 if ($thisclient && $thisclient->isGuest()
     && $cfg->isClientRegistrationEnabled()) { ?>
 
@@ -143,14 +135,10 @@ echo $v;
   <?php
     $email = $thisclient->getUserName();
     $clientId = TicketUser::lookupByEmail($email)->getId();
-
     $ticket->getThread()->render(array('M', 'R', 'user_id' => $clientId), array(
                     'mode' => Thread::MODE_CLIENT,
                     'html-id' => 'ticketThread')
                 );
-if ($blockReply = $ticket->isChild() && $ticket->getMergeType() != 'visual')
-    $warn = sprintf(__('This Ticket is Merged into another Ticket. Please go to the %s%d%s to reply.'),
-        '<a href="tickets.php?id=', $ticket->getPid(), '" style="text-decoration:underline">Parent</a>');
   ?>
 
 <div class="clear" style="padding-bottom:10px;"></div>
@@ -161,7 +149,7 @@ if ($blockReply = $ticket->isChild() && $ticket->getMergeType() != 'visual')
 <?php }elseif($warn) { ?>
     <div id="msg_warning"><?php echo $warn; ?></div>
 <?php }
-if ((!$ticket->isClosed() || $ticket->isReopenable()) && !$blockReply) { ?>
+if (!$ticket->isClosed() || $ticket->isReopenable()) { ?>
 <form id="reply" action="tickets.php?id=<?php echo $ticket->getId();
 ?>#reply" name="reply" method="post" enctype="multipart/form-data">
     <?php csrf_token(); ?>
@@ -173,7 +161,7 @@ if ((!$ticket->isClosed() || $ticket->isReopenable()) && !$blockReply) { ?>
          echo __('To best assist you, we request that you be specific and detailed'); ?></em>
         <font class="error">*&nbsp;<?php echo $errors['message']; ?></font>
         </p>
-        <textarea name="<?php echo $messageField->getFormName(); ?>" id="message" cols="50" rows="9" wrap="soft"
+        <textarea name="message" id="message" cols="50" rows="9" wrap="soft"
             class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
                 ?> draft" <?php
 list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.client', $ticket->getId(), $info['message']);

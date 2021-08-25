@@ -1,8 +1,6 @@
 <?php
 if(!defined('OSTCLIENTINC') || !is_object($thisclient) || !$thisclient->isValid()) die('Access Denied');
-
 $settings = &$_SESSION['client:Q'];
-
 // Unpack search, filter, and sort requests
 if (isset($_REQUEST['clear']))
     $settings = array();
@@ -15,7 +13,6 @@ if (isset($_REQUEST['topic_id'])) {
 if (isset($_REQUEST['status'])) {
     $settings['status'] = $_REQUEST['status'];
 }
-
 $org_tickets = $thisclient->canSeeOrgTickets();
 if ($settings['keywords']) {
     // Don't show stat counts for searches
@@ -31,12 +28,9 @@ else {
     $openTickets = $thisclient->getNumOpenTickets($org_tickets);
     $closedTickets = $thisclient->getNumClosedTickets($org_tickets);
 }
-
 $tickets = Ticket::objects();
-
 $qs = array();
 $status=null;
-
 $sortOptions=array('id'=>'number', 'subject'=>'cdata__subject',
                     'status'=>'status__name', 'dept'=>'dept__name','date'=>'created');
 $orderWays=array('DESC'=>'-','ASC'=>'');
@@ -45,21 +39,17 @@ $order_by=$order=null;
 $sort=($_REQUEST['sort'] && $sortOptions[strtolower($_REQUEST['sort'])])?strtolower($_REQUEST['sort']):'date';
 if($sort && $sortOptions[$sort])
     $order_by =$sortOptions[$sort];
-
 $order_by=$order_by ?: $sortOptions['date'];
 if ($_REQUEST['order'] && !is_null($orderWays[strtoupper($_REQUEST['order'])]))
     $order = $orderWays[strtoupper($_REQUEST['order'])];
 else
     $order = $orderWays['DESC'];
-
 $x=$sort.'_sort';
 $$x=' class="'.strtolower($_REQUEST['order'] ?: 'desc').'" ';
-
 $basic_filter = Ticket::objects();
 if ($settings['topic_id']) {
     $basic_filter = $basic_filter->filter(array('topic_id' => $settings['topic_id']));
 }
-
 if ($settings['status'])
     $status = strtolower($settings['status']);
     switch ($status) {
@@ -71,14 +61,12 @@ if ($settings['status'])
         $basic_filter->filter(array('status__state' => $status));
         break;
 }
-
 // Add visibility constraints — use a union query to use multiple indexes,
 // use UNION without "ALL" (false as second parameter to union()) to imply
 // unique values
 $visibility = $basic_filter->copy()
     ->values_flat('ticket_id')
     ->filter(array('user_id' => $thisclient->getId()));
-
 // Add visibility of Tickets where the User is a Collaborator if enabled
 if ($cfg->collaboratorTicketsVisibility())
     $visibility = $visibility
@@ -86,14 +74,12 @@ if ($cfg->collaboratorTicketsVisibility())
         ->values_flat('ticket_id')
         ->filter(array('thread__collaborators__user_id' => $thisclient->getId()))
     , false);
-
 if ($thisclient->canSeeOrgTickets()) {
     $visibility = $visibility->union(
         $basic_filter->copy()->values_flat('ticket_id')
             ->filter(array('user__org_id' => $thisclient->getOrgId()))
     , false);
 }
-
 // Perform basic search
 if ($settings['keywords']) {
     $q = trim($settings['keywords']);
@@ -104,11 +90,8 @@ if ($settings['keywords']) {
         $tickets = $ost->searcher->find($q, $tickets);
     }
 }
-
 $tickets->distinct('ticket_id');
-
 TicketForm::ensureDynamicDataView();
-
 $total=$visibility->count();
 $page=($_GET['p'] && is_numeric($_GET['p']))?$_GET['p']:1;
 $pageNav=new Pagenate($total, $page, PAGE_LIMIT);
@@ -117,7 +100,6 @@ $qs += array('sort' => $_REQUEST['sort'], 'order' => $_REQUEST['order']);
 $pageNav->setURL('tickets.php', $qs);
 $tickets->filter(array('ticket_id__in' => $visibility));
 $pageNav->paginate($tickets);
-
 $showing =$total ? $pageNav->showing() : "";
 if(!$results_type)
 {
@@ -126,16 +108,13 @@ if(!$results_type)
 $showing.=($status)?(' '.$results_type):' '.__('All Tickets');
 if($search)
     $showing=__('Search Results').": $showing";
-
 $negorder=$order=='-'?'ASC':'DESC'; //Negate the sorting
-
 $tickets->order_by($order.$order_by);
 $tickets->values(
     'ticket_id', 'number', 'created', 'isanswered', 'source', 'status_id',
     'status__state', 'status__name', 'cdata__subject', 'dept_id',
     'dept__name', 'dept__ispublic', 'user__default_email__address', 'user_id'
 );
-
 ?>
 <div class="search well">
 <div class="flush-left">
@@ -236,7 +215,6 @@ if ($closedTickets) {?>
             $status = TicketStatus::getLocalById($T['status_id'], 'value', $T['status__name']);
             if (false) // XXX: Reimplement attachment count support
                 $subject.='  &nbsp;&nbsp;<span class="Icon file"></span>';
-
             $ticketNumber=$T['number'];
             if($T['isanswered'] && !strcasecmp($T['status__state'], 'open')) {
                 $subject="<b>$subject</b>";
@@ -262,7 +240,6 @@ if ($closedTickets) {?>
             </tr>
         <?php
         }
-
      } else {
          echo '<tr><td colspan="5">'.__('Your query did not match any records').'</td></tr>';
      }

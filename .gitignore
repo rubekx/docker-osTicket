@@ -2,3 +2,4 @@
 /configs/mysql/database
 /configs/mysql/init/sql/*
 
+osticket/upload/include/plugins/*.phar
