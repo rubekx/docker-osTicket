@@ -91,7 +91,7 @@ body {
   font-size: 16px;
   line-height: 1.42857;
   color: #333333;
-  background: #54162e;
+  background: #3d3d3d;
 }
 
 .footer {
@@ -102,7 +102,7 @@ body {
   max-width: 1290px;
   /* Set the fixed height of the footer here */
   height: 80px;
-  background-color: #54162e;
+  background-color: #3d3d3d;
   padding-top: 8px;
 
 }
