@@ -9,6 +9,16 @@ if ($cfg->isClientEmailVerificationRequired())
 else
     $button = __("View Ticket");
 ?>
+<div class="jumbotron">
+    <h1 class="text-center"> Central de Atendimento </h1>
+    <p class="text-justify">Seja bem-vindo(a) a central de atendimento do DTED. Escolha uma forma de abertura de chamado abaixo: </p>
+    <p>
+        <a href="login.php" class="btn btn-primary btn-lg btn-block">Abrir um chamado <br><b>com cadastro</b></a>
+    </p>
+    <p>
+        <a href="open.php" class="btn btn-default btn-lg btn-block">Abrir um chamado <br><b>sem cadastro</b></a>
+    </p>
+</div>
 <div class="row">
 	<div class="page-title">  
 		<h1><?php echo __('Check Ticket Status'); ?></h1>
@@ -28,7 +38,7 @@ else
 	<div class="login-box col-md-6">
 		<div><strong><?php echo Format::htmlchars($errors['login']); ?></strong></div>
 		<div>
-			<label for="email"><?php echo __('E-Mail Address'); ?>:
+			<label for="email"><?php echo __('Email Address'); ?>:
 			<input class="form-control" id="email" placeholder="<?php echo __('e.g. john.doe@osticket.com'); ?>" type="text"
 				name="lemail" size="30" value="<?php echo $email; ?>" class="nowarn"></label>
 		</div>

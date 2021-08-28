@@ -116,6 +116,24 @@ $tickets->values(
     'dept__name', 'dept__ispublic', 'user__default_email__address', 'user_id'
 );
 ?>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="page-header">
+                    <h1>Olá, <?php echo Format::htmlchars($thisclient->getName()); ?> <br> <small>Seja bem-vindo(a) à </small>
+                    </h1>
+                    <h2>Central de atendimento!</h2>
+                    <p>
+                        Escolha uma das opções no menu acima e realize a sua demanda.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="search well">
 <div class="flush-left">
 <form action="tickets.php" method="get" id="ticketSearchForm">
@@ -179,23 +197,24 @@ if ($closedTickets) {?>
     </small>
 </div>
 </h1>
-<table id="ticketTable" width="800" border="0" cellspacing="0" cellpadding="0">
+<div class="table-responsive">
+<table id="ticketTable" class="table" >
     <caption><?php echo $showing; ?></caption>
     <thead>
         <tr>
             <th nowrap>
                 <a href="tickets.php?sort=ID&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="Sort By Ticket ID"><?php echo __('Ticket #');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
-            <th width="120">
+            <th>
                 <a href="tickets.php?sort=date&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="Sort By Date"><?php echo __('Create Date');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
-            <th width="100">
+            <th>
                 <a href="tickets.php?sort=status&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="Sort By Status"><?php echo __('Status');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
-            <th width="320">
+            <th>
                 <a href="tickets.php?sort=subject&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="Sort By Subject"><?php echo __('Subject');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
-            <th width="120">
+            <th>
                 <a href="tickets.php?sort=dept&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="Sort By Department"><?php echo __('Department');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
         </tr>
@@ -231,9 +250,9 @@ if ($closedTickets) {?>
                 <td><?php echo $status; ?></td>
                 <td>
                   <?php if ($isCollab) {?>
-                    <div style="max-height: 1.2em; max-width: 320px;" class="link truncate" href="tickets.php?id=<?php echo $T['ticket_id']; ?>"><i class="icon-group"></i> <?php echo $subject; ?></div>
+                    <div  class="link truncate" href="tickets.php?id=<?php echo $T['ticket_id']; ?>"><i class="icon-group"></i> <?php echo $subject; ?></div>
                   <?php } else {?>
-                    <div style="max-height: 1.2em; max-width: 320px;" class="link truncate" href="tickets.php?id=<?php echo $T['ticket_id']; ?>"><?php echo $subject; ?></div>
+                    <div class="link truncate" href="tickets.php?id=<?php echo $T['ticket_id']; ?>"><?php echo $subject; ?></div>
                     <?php } ?>
                 </td>
                 <td><span class="truncate"><?php echo $dept; ?></span></td>
@@ -246,6 +265,7 @@ if ($closedTickets) {?>
     ?>
     </tbody>
 </table>
+</div>
 <?php
 if ($total) {
     echo '<div>&nbsp;'.__('Page').':'.$pageNav->getPageLinks().'&nbsp;</div>';

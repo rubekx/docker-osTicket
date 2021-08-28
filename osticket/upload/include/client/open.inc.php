@@ -29,7 +29,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
 ?>
 <div class="row">
 <div class="page-title">
-	<h1><?php echo __('Open a New Ticket');?></h1>
+	<h1><?php echo __('Open a New Ticket'); if((!$thisclient || !$thisclient->isValid())){ echo " - Sem Cadastro"; }?></h1>
 	<div><?php echo __('Please fill in the form below to open a new ticket.');?></div>
 </div>
 </div>
@@ -44,18 +44,28 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
             $uform->render(array('staff' => false, 'mode' => 'create'));
         }
         else { ?> </h3>
-      
-		<?php echo __('Email'); ?>: <?php echo $thisclient->getEmail(); ?>
-		<?php echo __('Client'); ?>:</td><td><?php echo Format::htmlchars($thisclient->getName()); ?>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th><?php echo __('Email'); ?></th>
+                    <th><?php echo __('Client'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><?php echo $thisclient->getEmail(); ?></td>
+                    <td><?php echo Format::htmlchars($thisclient->getName()); ?></td>
+                </tr>
+            </tbody>
+        </table>
         <?php } ?>
 		
         <div class="panel panel-default">
 
             <div class="panel-heading">
 			<div class="form-header" style="margin-bottom:0.5em">
-                <h3 class="panel-title"> <?php echo __('Help Topic');?> </h3>
+                <h3 class="panel-title"><?php echo __('Curso'); ?></b></h3>
 				</div>
-                <em>  <?php echo __('Select the Relevant Topic');?>  </em>
             </div>
             <div class="panel-body">
                 <select class="form-control" id="topicId" name="topicId" onchange="javascript:

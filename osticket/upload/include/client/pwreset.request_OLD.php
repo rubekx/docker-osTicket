@@ -15,7 +15,7 @@ $userid=Format::input($_POST['userid']);
     <strong><?php echo Format::htmlchars($banner); ?></strong>
     <br>
     <div>
-        <label for="username">Email Cadastrado:</label>
+        <label for="username"><?php echo __('Username'); ?>:</label>
         <input id="username" type="text" name="userid" size="30" value="<?php echo $userid; ?>">
     </div>
     <p>
