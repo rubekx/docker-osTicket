@@ -1,4 +1,5 @@
 .env
 /configs/mysql/database
 /configs/mysql/init/sql/*
-
+osticket/scripts
+osticket/upload
