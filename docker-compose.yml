@@ -32,4 +32,4 @@ services:
 
 networks:
   osticket-network:
-    driver: bridge
+    external: true
